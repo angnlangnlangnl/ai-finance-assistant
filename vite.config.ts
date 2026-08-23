@@ -1,25 +1,12 @@
-{
-  "name": "my-scheduler",
-  "version": "1.0.0",
-  "lockfileVersion": 3,
-  "requires": true,
-  "packages": {
-    "": {
-      "name": "my-scheduler",
-      "version": "1.0.0",
-      "license": "ISC",
-      "dependencies": {
-        "node-cron": "^4.2.1"
-      }
-    },
-    "node_modules/node-cron": {
-      "version": "4.2.1",
-      "resolved": "https://registry.npmmirror.com/node-cron/-/node-cron-4.2.1.tgz",
-      "integrity": "sha512-lgimEHPE/QDgFlywTd8yTR61ptugX3Qer29efeyWw2rv259HtGBNn1vZVmp8lB9uo9wC0t/AT4iGqXxia+CJFg==",
-      "license": "ISC",
-      "engines": {
-        "node": ">=6.0.0"
-      }
-    }
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  // 👇 重要：改成你的仓库名
+  base: '/ai-finance-assistant/',
+  server: {
+    port: 3000,
+    open: true
   }
-}
+})
