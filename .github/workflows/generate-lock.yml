@@ -1,13 +1,13 @@
 - name: 提交并推送
   env:
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
   run: |
-    git config --global user.name "github-actions[bot]"
-    git config --global user.email "github-actions[bot]@users.noreply.github.com"
-    git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/angnlangnlangnl/ai-finance-assistant.git
+    git config --global user.name "angnlangnlangnl"
+    git config --global user.email "angnlangnlangnl@example.com"
+    git remote set-url origin https://angnlangnlangnl:${PAT_TOKEN}@github.com/angnlangnlangnl/ai-finance-assistant.git
     git add package-lock.json
     if git status --porcelain | grep -q "package-lock.json"; then
-      git commit -m "🤖 自动生成完整的 package-lock.json" || echo "没有变更"
+      git commit -m "🤖 自动生成完整的 package-lock.json"
       git push
     else
       echo "没有新的变更需要提交。"
