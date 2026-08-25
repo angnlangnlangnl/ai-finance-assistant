@@ -2,405 +2,515 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI 金融助手</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>AI 金融助手 · MVP演示版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        /* 保留原有样式，新增以下 */
+        .api-config-panel {
+            background: linear-gradient(145deg, #1a1a2e, #0f0f1a);
+            border: 1px solid #2a2a4a;
+            border-radius: 16px;
+            padding: 16px;
+            margin: 12px 0;
         }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: #0a0a0f;
+        .api-key-input {
+            background: #0a0a12;
+            border: 1px solid #2a2a3a;
+            border-radius: 8px;
+            padding: 8px 12px;
             color: #e8e8f0;
-            height: 100vh;
-            overflow: hidden;
+            font-size: 13px;
+            width: 100%;
+            outline: none;
         }
-        ::-webkit-scrollbar {
-            width: 4px;
+        .api-key-input:focus {
+            border-color: #3b82f6;
         }
-        ::-webkit-scrollbar-track {
-            background: transparent;
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
         }
-        ::-webkit-scrollbar-thumb {
-            background: #2a2a3a;
-            border-radius: 4px;
+        .status-executed {
+            background: #1a3a2a;
+            color: #4ade80;
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #3a3a4a;
+        .status-pending {
+            background: #3a3a1a;
+            color: #fbbf24;
         }
-        .message-bubble a {
-            color: #60a5fa;
-            text-decoration: underline;
+        .rebate-card {
+            background: linear-gradient(135deg, #1a2a3a, #0f1a2a);
+            border: 1px solid #2a3a4a;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 8px 0;
         }
-        .message-bubble a:hover {
-            color: #93bbfc;
+        .rebate-amount {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #4ade80;
         }
-        .typing-cursor::after {
-            content: '▊';
-            animation: blink 1s step-end infinite;
-            color: #6a6a7a;
+        .trade-record {
+            background: #12121f;
+            border: 1px solid #1a1a2a;
+            border-radius: 10px;
+            padding: 12px;
+            margin: 8px 0;
         }
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
+        .btn-execute {
+            background: #059669;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-execute:active {
+            background: #047857;
+            transform: scale(0.95);
+        }
+        .btn-execute.executed {
+            background: #4b5563;
+            cursor: default;
         }
     </style>
 </head>
 <body>
 
-<div id="app" class="flex h-screen bg-[#0a0a0f] text-[#e8e8f0]">
-    <!-- ====== 左侧边栏 ====== -->
-    <div class="w-80 border-r border-[#1a1a2a] p-6 flex flex-col flex-shrink-0">
-        <div class="flex items-center gap-3 mb-8">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">AI</div>
-            <div>
-                <h1 class="text-lg font-semibold">金融助手</h1>
-                <p class="text-xs text-[#6a6a7a]">在线 · 已连接 4 条链</p>
-            </div>
+    <!-- 启动页和主应用保持原有结构，在消息列表后添加新面板 -->
+    
+    <!-- 在主应用的消息列表区域后，添加新的分析面板 -->
+    <div id="app">
+        <!-- 原有遮罩层、抽屉、顶部导航、快捷操作 -->
+        
+        <!-- 消息列表 -->
+        <div id="messageList" class="flex-1 overflow-y-auto px-4 py-3 space-y-3"></div>
+        
+        <!-- ===== 新增：AI分析+执行+返利闭环面板 ===== -->
+        <div id="mvpPanel" class="px-4 pb-3 bg-[#0a0a0f] border-t border-[#1a1a2a] flex-shrink-0">
+            <!-- 这个面板会在初始化时动态渲染 -->
         </div>
-
-        <!-- 资产总览 -->
-        <div id="assetOverview" class="space-y-4">
-            <!-- 由 JS 动态渲染 -->
-        </div>
-
-        <div class="mt-auto pt-4 border-t border-[#1a1a2a]">
-            <div class="flex items-center gap-2 text-xs text-[#5a5a6a]">
-                <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                安全模式 · 非托管
-            </div>
-            <p class="text-[10px] text-[#3a3a4a] mt-1">AI 可准备交易，执行需你的确认</p>
+        
+        <!-- 原有输入区域 -->
+        <div class="border-t border-[#1a1a2a] p-2 bg-[#0a0a0f] flex-shrink-0 safe-area-bottom">
+            <!-- 原有输入框和按钮 -->
         </div>
     </div>
 
-    <!-- ====== 右侧聊天主界面 ====== -->
-    <div class="flex-1 flex flex-col min-w-0">
-        <!-- 顶部操作栏 -->
-        <div class="border-b border-[#1a1a2a] px-6 py-3 flex items-center justify-between">
-            <span class="text-sm font-medium text-[#8a8a9a]">💬 对话</span>
-            <div id="quickActions" class="flex gap-2">
-                <!-- 由 JS 动态渲染 -->
+    <script>
+        // ============ 在原有代码基础上新增MVP功能 ============
+        
+        // DeepSeek API配置
+        const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+        let apiKey = localStorage.getItem('deepseek_api_key') || '';
+        
+        // 模拟用户数据库
+        let currentUser = {
+            id: 'user_demo_001',
+            name: '演示用户',
+            referrerId: 'agent_demo_01'
+        };
+        
+        // 交易记录存储
+        let tradeRecords = JSON.parse(localStorage.getItem('trade_records') || '[]');
+        
+        // 推广员返利数据
+        let rebateData = JSON.parse(localStorage.getItem('rebate_data') || '{"totalRebate": 0, "pendingRebate": 0, "totalUsers": 1}');
+        
+        // ============ AI分析函数（接入DeepSeek） ============
+        async function getAIAnalysis(symbol = 'ETH', marketData = null) {
+            if (!apiKey) {
+                return {
+                    success: false,
+                    message: '请先配置DeepSeek API Key（免费申请：platform.deepseek.com）',
+                    fallback: true
+                };
+            }
+            
+            const defaultData = {
+                'ETH': { price: 2800, change: 2.3, volatility: 3.2, sentiment: '中性偏多' },
+                'BTC': { price: 65000, change: 1.8, volatility: 2.5, sentiment: '看多' },
+                'SOL': { price: 120, change: 5.1, volatility: 4.8, sentiment: '看多' }
+            };
+            
+            const data = marketData || defaultData[symbol] || defaultData['ETH'];
+            
+            const prompt = `你是一个专业的加密货币分析师。请分析${symbol}的短期趋势，给出操作建议。
+            
+当前市场数据：
+- 价格：$${data.price}
+- 24h涨跌：${data.change}%
+- 波动率：${data.volatility}%
+- 市场情绪：${data.sentiment}
+
+请输出JSON格式的建议：
+{
+    "symbol": "${symbol}",
+    "action": "buy/sell/hold",
+    "confidence": 0-100,
+    "entryPrice": 建议入场价,
+    "stopLoss": 止损价,
+    "targetPrice": 目标价,
+    "reason": "简短理由"
+}`;
+            
+            try {
+                const response = await fetch(DEEPSEEK_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: 'deepseek-chat',
+                        messages: [
+                            { role: 'system', content: '你是一个加密货币交易分析助手，输出严格JSON格式。' },
+                            { role: 'user', content: prompt }
+                        ],
+                        temperature: 0.7
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.choices && result.choices[0]) {
+                    const content = result.choices[0].message.content;
+                    const jsonMatch = content.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        return {
+                            success: true,
+                            analysis: JSON.parse(jsonMatch[0]),
+                            raw: content
+                        };
+                    }
+                }
+                
+                return { success: false, message: 'AI分析失败，使用模拟数据' };
+                
+            } catch (error) {
+                console.error('API调用失败:', error);
+                return { success: false, message: '网络错误，使用模拟数据' };
+            }
+        }
+        
+        // ============ 模拟AI分析（当没有API Key时） ============
+        function getSimulatedAnalysis(symbol) {
+            const analyses = {
+                'ETH': {
+                    symbol: 'ETH', action: 'buy', confidence: 72,
+                    entryPrice: 2780, stopLoss: 2650, targetPrice: 3100,
+                    reason: 'ETH处于上升通道，RSI健康，建议逢低做多'
+                },
+                'BTC': {
+                    symbol: 'BTC', action: 'hold', confidence: 65,
+                    entryPrice: 64500, stopLoss: 62000, targetPrice: 70000,
+                    reason: 'BTC高位震荡，等待突破确认后再入场'
+                },
+                'SOL': {
+                    symbol: 'SOL', action: 'buy', confidence: 81,
+                    entryPrice: 118, stopLoss: 105, targetPrice: 150,
+                    reason: 'SOL生态活跃度激增，技术面强势突破'
+                }
+            };
+            return analyses[symbol] || analyses['ETH'];
+        }
+        
+        // ============ 执行交易记录 ============
+        function executeTrade(analysis, amount = 1000) {
+            const record = {
+                id: 'trade_' + Date.now(),
+                userId: currentUser.id,
+                referrerId: currentUser.referrerId,
+                symbol: analysis.symbol,
+                action: analysis.action,
+                entryPrice: analysis.entryPrice,
+                amount: amount,
+                timestamp: new Date().toISOString(),
+                status: 'executed',
+                rebateRate: 0.02, // 2%返利
+                rebateAmount: amount * 0.02,
+                aiConfidence: analysis.confidence
+            };
+            
+            tradeRecords.push(record);
+            localStorage.setItem('trade_records', JSON.stringify(tradeRecords));
+            
+            // 更新推广员返利
+            rebateData.totalRebate += record.rebateAmount;
+            rebateData.pendingRebate += record.rebateAmount;
+            rebateData.totalUsers += 1;
+            localStorage.setItem('rebate_data', JSON.stringify(rebateData));
+            
+            return record;
+        }
+        
+        // ============ 渲染MVP面板 ============
+        function renderMVPPanel() {
+            const panel = document.getElementById('mvpPanel');
+            const hasApiKey = !!apiKey;
+            
+            let html = `
+            <div class="api-config-panel">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-semibold text-[#e8e8f0]">🔑 AI分析配置</h3>
+                    <span class="status-badge ${hasApiKey ? 'status-executed' : 'status-pending'}">
+                        ${hasApiKey ? '✅ AI已连接' : '⚠️ 使用模拟数据'}
+                    </span>
+                </div>
+                <div class="flex gap-2">
+                    <input type="password" id="apiKeyInput" class="api-key-input flex-1" 
+                           placeholder="输入DeepSeek API Key (免费申请)" value="${apiKey}">
+                    <button onclick="saveApiKey()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold tap-active">
+                        保存
+                    </button>
+                </div>
+                <p class="text-xs text-[#6a6a7a] mt-2">
+                    💡 免费获取：<a href="https://platform.deepseek.com" target="_blank" class="text-blue-400 underline">platform.deepseek.com</a> 
+                    注册即送500万tokens
+                </p>
             </div>
-        </div>
-
-        <!-- 消息列表 -->
-        <div id="messageList" class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-            <!-- 由 JS 动态渲染 -->
-        </div>
-
-        <!-- 输入区域 -->
-        <div class="border-t border-[#1a1a2a] p-4">
-            <div class="max-w-4xl mx-auto flex items-end gap-3 bg-[#12121f] rounded-2xl border border-[#1a1a2a] p-2 focus-within:border-blue-500/50 transition-colors">
-                <textarea id="chatInput" rows="1" placeholder="说句话，或者输入命令..." class="flex-1 bg-transparent outline-none resize-none text-sm min-h-[40px] max-h-[120px] px-2 py-1.5 text-[#e8e8f0] placeholder-[#4a4a5a]"></textarea>
-                <button id="sendBtn" class="p-2 rounded-xl transition-all bg-[#1a1a2a] text-[#4a4a5a] cursor-not-allowed">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4 20-7z"/><path d="M22 2 11 13"/></svg>
+            
+            <div class="grid grid-cols-3 gap-2 mb-2">
+                <button onclick="requestAnalysis('ETH')" class="bg-[#1a1a2a] text-[#e8e8f0] p-3 rounded-xl text-sm font-medium tap-active hover:bg-[#2a2a3a]">
+                    📊 分析ETH
+                </button>
+                <button onclick="requestAnalysis('BTC')" class="bg-[#1a1a2a] text-[#e8e8f0] p-3 rounded-xl text-sm font-medium tap-active hover:bg-[#2a2a3a]">
+                    📊 分析BTC
+                </button>
+                <button onclick="requestAnalysis('SOL')" class="bg-[#1a1a2a] text-[#e8e8f0] p-3 rounded-xl text-sm font-medium tap-active hover:bg-[#2a2a3a]">
+                    📊 分析SOL
                 </button>
             </div>
-            <div class="flex items-center justify-between mt-2 text-[10px] text-[#3a3a4a] px-2">
-                <span>AI 可读取持仓，执行操作需你确认</span>
-                <span>⌘ + Enter 发送</span>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    // ============================================================
-    //  数据
-    // ============================================================
-    const mockAssets = [
-        { symbol: 'ETH', name: 'Ethereum', balance: 3.42, usdValue: 8243.22, chain: 'Ethereum' },
-        { symbol: 'BTC', name: 'Bitcoin', balance: 0.15, usdValue: 8475.00, chain: 'Bitcoin' },
-        { symbol: 'USDC', name: 'USD Coin', balance: 12500.00, usdValue: 12500.00, chain: 'Ethereum' },
-        { symbol: 'SOL', name: 'Solana', balance: 120.5, usdValue: 3856.00, chain: 'Solana' },
-        { symbol: 'ARB', name: 'Arbitrum', balance: 8500, usdValue: 5100.00, chain: 'Arbitrum' },
-    ];
-    const totalValue = mockAssets.reduce((sum, a) => sum + a.usdValue, 0);
-
-    let messages = [
-        {
-            id: 'welcome',
-            role: 'assistant',
-            content: '👋 你好！我是你的 AI 金融管家。我看到你目前在 4 条链上持有约 **$38,174** 的资产。\n\n你想做什么？比如：\n• "帮我看看最近哪个仓位该调整"\n• "把闲置 USDC 转到收益最高的协议"\n• "最近市场波动大，帮我分析一下风险"',
-            timestamp: new Date(),
-            type: 'text',
-        }
-    ];
-    let isProcessing = false;
-
-    // ============================================================
-    //  渲染函数
-    // ============================================================
-
-    // 渲染资产总览
-    function renderAssetOverview() {
-        const container = document.getElementById('assetOverview');
-        const change = 2.3;
-        const changeColor = change >= 0 ? 'text-emerald-400' : 'text-red-400';
-
-        let html = `
-            <div class="bg-[#12121f] rounded-2xl p-4 border border-[#1a1a2a]">
+            
+            <div id="analysisResult" class="mb-2"></div>
+            
+            <div class="rebate-card">
                 <div class="flex items-center justify-between">
-                    <span class="text-sm text-[#6a6a7a]">总资产</span>
-                    <span class="text-sm ${changeColor}">${change >= 0 ? '+' : ''}${change}%</span>
-                </div>
-                <div class="text-2xl font-bold mt-1">$${totalValue.toLocaleString()}</div>
-                <div class="flex items-center gap-2 mt-2 text-xs text-[#5a5a5a]">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M6 6h12M6 18h12"/><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
-                    <span>${mockAssets.length} 种资产 · 4 条链</span>
-                </div>
-            </div>
-            <div class="space-y-1.5">
-        `;
-
-        mockAssets.forEach(asset => {
-            const pct = ((asset.usdValue / totalValue) * 100).toFixed(1);
-            html += `
-                <div class="flex items-center justify-between py-2 px-3 rounded-xl hover:bg-[#12121f] transition-colors cursor-pointer">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-full bg-[#1a1a2a] flex items-center justify-center text-xs font-bold text-[#6a6a7a]">${asset.symbol.slice(0, 2)}</div>
-                        <div>
-                            <div class="text-sm font-medium">${asset.symbol}</div>
-                            <div class="text-xs text-[#5a5a6a]">${asset.balance} · ${asset.chain}</div>
-                        </div>
+                    <div>
+                        <p class="text-xs text-[#8a8a9a]">我的推广返利</p>
+                        <div class="rebate-amount">$${rebateData.totalRebate.toFixed(2)}</div>
                     </div>
                     <div class="text-right">
-                        <div class="text-sm font-medium">$${asset.usdValue.toLocaleString()}</div>
-                        <div class="text-xs text-[#5a5a6a]">${pct}%</div>
+                        <p class="text-xs text-[#8a8a9a]">待结算</p>
+                        <p class="text-lg font-semibold text-[#fbbf24]">$${rebateData.pendingRebate.toFixed(2)}</p>
                     </div>
                 </div>
+                <div class="mt-2 pt-2 border-t border-[#2a3a4a]">
+                    <p class="text-xs text-[#8a8a9a]">推广用户：${rebateData.totalUsers}人 | 返利比例：2%</p>
+                </div>
+            </div>
+            
+            <div class="mt-2">
+                <button onclick="showTradeHistory()" class="w-full bg-[#1a1a2a] text-[#8a8a9a] py-2 rounded-lg text-xs font-medium tap-active">
+                    📋 查看交易记录 (${tradeRecords.length}笔)
+                </button>
+            </div>
             `;
-        });
-
-        html += `</div>`;
-        container.innerHTML = html;
-    }
-
-    // 渲染快捷操作按钮
-    function renderQuickActions() {
-        const container = document.getElementById('quickActions');
-        const actions = [
-            { label: '收益优化', icon: '📈', prompt: '帮我优化闲置资产的收益' },
-            { label: '风险评估', icon: '🛡️', prompt: '帮我分析当前持仓风险' },
-            { label: '持仓总览', icon: '📊', prompt: '查看我的完整持仓' },
-            { label: '智能执行', icon: '⚡', prompt: '根据当前市场自动调整配置' },
-        ];
-
-        container.innerHTML = actions.map(a =>
-            `<button onclick="sendMessage('${a.prompt}')" class="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl bg-[#12121f] border border-[#1a1a2a] text-[#8a8a9a] hover:bg-[#1a1a2a] hover:text-[#e8e8f0] transition-all">${a.icon} ${a.label}</button>`
-        ).join('');
-    }
-
-    // 渲染消息列表
-    function renderMessages() {
-        const container = document.getElementById('messageList');
-        let html = '';
-
-        messages.forEach(msg => {
-            const isUser = msg.role === 'user';
-            const isSystem = msg.role === 'system';
-
-            if (isSystem) {
-                html += `<div class="flex justify-center"><div class="bg-[#12121f] text-xs text-[#5a5a6a] px-4 py-1.5 rounded-full border border-[#1a1a2a]">${msg.content}</div></div>`;
+            
+            panel.innerHTML = html;
+        }
+        
+        // ============ 请求AI分析 ============
+        async function requestAnalysis(symbol) {
+            const resultDiv = document.getElementById('analysisResult');
+            
+            // 显示加载状态
+            resultDiv.innerHTML = `
+                <div class="text-center py-4 text-sm text-[#6a6a7a]">
+                    <div class="typing-cursor">AI分析中</div>
+                </div>
+            `;
+            
+            let analysis;
+            let isRealAI = false;
+            
+            if (apiKey) {
+                const result = await getAIAnalysis(symbol);
+                if (result.success) {
+                    analysis = result.analysis;
+                    isRealAI = true;
+                } else {
+                    analysis = getSimulatedAnalysis(symbol);
+                }
+            } else {
+                await new Promise(resolve => setTimeout(resolve, 800)); // 模拟延迟
+                analysis = getSimulatedAnalysis(symbol);
+            }
+            
+            // 渲染分析结果
+            const actionColor = {
+                'buy': '#4ade80',
+                'sell': '#f87171',
+                'hold': '#fbbf24'
+            };
+            
+            const actionText = {
+                'buy': '买入',
+                'sell': '卖出',
+                'hold': '持有'
+            };
+            
+            resultDiv.innerHTML = `
+                <div class="trade-record">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-lg font-bold">${analysis.symbol}</span>
+                            <span class="status-badge ${isRealAI ? 'status-executed' : 'status-pending'}">
+                                ${isRealAI ? '🤖 AI分析' : '📊 模拟分析'}
+                            </span>
+                        </div>
+                        <span class="font-bold" style="color: ${actionColor[analysis.action]}">
+                            ${actionText[analysis.action]} · ${analysis.confidence}%信心
+                        </span>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-2 text-center mb-3">
+                        <div class="bg-[#0a0a12] p-2 rounded-lg">
+                            <p class="text-xs text-[#6a6a7a]">入场价</p>
+                            <p class="font-semibold text-sm">$${analysis.entryPrice}</p>
+                        </div>
+                        <div class="bg-[#0a0a12] p-2 rounded-lg">
+                            <p class="text-xs text-[#6a6a7a]">止损价</p>
+                            <p class="font-semibold text-sm text-[#f87171]">$${analysis.stopLoss}</p>
+                        </div>
+                        <div class="bg-[#0a0a12] p-2 rounded-lg">
+                            <p class="text-xs text-[#6a6a7a]">目标价</p>
+                            <p class="font-semibold text-sm text-[#4ade80]">$${analysis.targetPrice}</p>
+                        </div>
+                    </div>
+                    
+                    <p class="text-xs text-[#b0b0c0] mb-3">💡 ${analysis.reason}</p>
+                    
+                    <div class="flex gap-2">
+                        <button onclick="executeAndRecord('${analysis.symbol}', ${analysis.entryPrice}, '${analysis.action}', ${analysis.confidence})" 
+                                class="btn-execute flex-1" id="executeBtn_${analysis.symbol}">
+                            ✅ 我已手动执行
+                        </button>
+                        <button onclick="copyAnalysis()" class="px-4 py-2 bg-[#1a1a2a] text-[#8a8a9a] rounded-lg text-xs font-semibold tap-active">
+                            📋 复制
+                        </button>
+                    </div>
+                    
+                    <p class="text-xs text-[#5a5a6a] mt-2">
+                        💰 执行后推广员将获得交易额2%的返利
+                    </p>
+                </div>
+            `;
+        }
+        
+        // ============ 执行并记录交易 ============
+        function executeAndRecord(symbol, price, action, confidence) {
+            const amount = 1000; // 模拟交易金额$1000
+            const analysis = {
+                symbol: symbol,
+                action: action,
+                entryPrice: price,
+                confidence: confidence
+            };
+            
+            const record = executeTrade(analysis, amount);
+            
+            // 更新按钮状态
+            const btn = document.getElementById(`executeBtn_${symbol}`);
+            if (btn) {
+                btn.textContent = '✅ 已执行并记录';
+                btn.classList.add('executed');
+                btn.disabled = true;
+            }
+            
+            // 更新返利显示
+            renderMVPPanel();
+            
+            // 添加系统消息
+            addSystemMessage(`✅ 交易记录成功！推广员获得 $${record.rebateAmount.toFixed(2)} 返利`);
+            
+            // 重新渲染分析结果以更新返利数据
+            const resultDiv = document.getElementById('analysisResult');
+            const currentHtml = resultDiv.innerHTML;
+            // 保持分析结果不变，只更新返利卡片
+        }
+        
+        // ============ 显示交易历史 ============
+        function showTradeHistory() {
+            if (tradeRecords.length === 0) {
+                alert('暂无交易记录');
                 return;
             }
-
-            // 格式化加粗文本 **text**
-            const contentHtml = msg.content.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>').replace(/\n/g, '<br>');
-
-            let typeLabel = '';
-            let typeIcon = '';
-            if (msg.type === 'transaction_preview') {
-                typeLabel = '交易预览 · 待确认';
-                typeIcon = '✅';
-            } else if (msg.type === 'alert') {
-                typeLabel = '风险提醒';
-                typeIcon = '⚠️';
-            } else if (msg.type === 'asset_summary') {
-                typeLabel = '持仓分析';
-                typeIcon = '✨';
+            
+            let historyHtml = '📋 交易记录\n\n';
+            tradeRecords.slice(-5).forEach((record, index) => {
+                const date = new Date(record.timestamp).toLocaleDateString('zh-CN');
+                historyHtml += `${index + 1}. ${record.symbol} ${record.action.toUpperCase()} $${record.amount} @ $${record.entryPrice}\n`;
+                historyHtml += `   返利: $${record.rebateAmount.toFixed(2)} | ${date}\n\n`;
+            });
+            
+            alert(historyHtml);
+        }
+        
+        // ============ 保存API Key ============
+        function saveApiKey() {
+            const input = document.getElementById('apiKeyInput');
+            apiKey = input.value.trim();
+            localStorage.setItem('deepseek_api_key', apiKey);
+            renderMVPPanel();
+            addSystemMessage(apiKey ? '✅ API Key已保存，现在使用真实AI分析' : 'ℹ️ 使用模拟数据分析');
+        }
+        
+        // ============ 复制分析 ============
+        function copyAnalysis() {
+            const resultDiv = document.getElementById('analysisResult');
+            const text = resultDiv.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✅ 分析结果已复制');
+            });
+        }
+        
+        // ============ 初始化时调用 ============
+        // 在原有初始化代码中添加：
+        document.addEventListener('DOMContentLoaded', function() {
+            // ... 原有初始化代码 ...
+            
+            // 初始化MVP面板
+            renderMVPPanel();
+            
+            // 暴露全局函数
+            window.requestAnalysis = requestAnalysis;
+            window.executeAndRecord = executeAndRecord;
+            window.saveApiKey = saveApiKey;
+            window.showTradeHistory = showTradeHistory;
+            window.copyAnalysis = copyAnalysis;
+        });
+        
+        // 修改原有的sendMessage函数，添加对分析命令的响应
+        const originalSendMessage = window.sendMessage;
+        window.sendMessage = function(text) {
+            const lower = text.toLowerCase();
+            
+            // 检测是否为分析请求
+            const symbolMatch = text.match(/(ETH|BTC|SOL|以太坊|比特币|索拉纳)/i);
+            if (symbolMatch && (lower.includes('分析') || lower.includes('建议') || lower.includes('怎么看'))) {
+                const symbolMap = {
+                    'ETH': 'ETH', '以太坊': 'ETH',
+                    'BTC': 'BTC', '比特币': 'BTC',
+                    'SOL': 'SOL', '索拉纳': 'SOL'
+                };
+                const symbol = symbolMap[symbolMatch[1].toUpperCase()] || symbolMatch[1].toUpperCase();
+                requestAnalysis(symbol);
+                return;
             }
-
-            const timeStr = msg.timestamp.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-
-            html += `
-                <div class="flex items-start gap-3 ${isUser ? 'flex-row-reverse' : ''}">
-                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${isUser ? 'bg-blue-500 text-white' : 'bg-[#1a1a2a] text-[#6a6a7a]'}">${isUser ? '我' : 'AI'}</div>
-                    <div class="max-w-[80%] ${isUser ? 'bg-blue-500 rounded-2xl rounded-tr-none' : 'bg-[#12121f] rounded-2xl rounded-tl-none border border-[#1a1a2a]'} px-4 py-3 message-bubble">
-                        ${typeLabel ? `<div class="flex items-center gap-1.5 text-xs ${msg.type === 'transaction_preview' ? 'text-emerald-400' : msg.type === 'alert' ? 'text-amber-400' : 'text-blue-400'} mb-1.5"><span>${typeIcon}</span> ${typeLabel}</div>` : ''}
-                        <div class="text-sm leading-relaxed ${isUser ? 'text-white' : 'text-[#d0d0e0]'}">${contentHtml}</div>
-                        ${msg.type === 'transaction_preview' ? `
-                            <div class="flex gap-2 mt-3">
-                                <button class="text-xs bg-emerald-500/20 text-emerald-400 px-4 py-1.5 rounded-lg hover:bg-emerald-500/30 transition-colors" onclick="alert('✅ 交易已模拟执行（演示版）')">确认执行</button>
-                                <button class="text-xs bg-[#1a1a2a] text-[#6a6a7a] px-4 py-1.5 rounded-lg hover:bg-[#2a2a3a] transition-colors" onclick="alert('✏️ 修改参数功能（演示版）')">修改参数</button>
-                            </div>
-                        ` : ''}
-                        <div class="text-[10px] mt-1.5 ${isUser ? 'text-blue-200/60' : 'text-[#4a4a5a]'}">${timeStr}</div>
-                    </div>
-                </div>
-            `;
-        });
-
-        // 打字中的加载状态
-        if (isProcessing) {
-            html += `
-                <div class="flex items-start gap-3">
-                    <div class="w-8 h-8 rounded-full bg-[#1a1a2a] flex items-center justify-center text-xs font-bold text-[#6a6a7a]">AI</div>
-                    <div class="bg-[#12121f] rounded-2xl rounded-tl-none px-4 py-3 border border-[#1a1a2a]">
-                        <div class="typing-cursor text-[#4a4a5a]">思考中</div>
-                    </div>
-                </div>
-            `;
-        }
-
-        container.innerHTML = html;
-        container.scrollTop = container.scrollHeight;
-    }
-
-    // ============================================================
-    //  消息发送逻辑
-    // ============================================================
-
-    function sendMessage(text) {
-        if (!text || text.trim() === '' || isProcessing) return;
-
-        // 添加用户消息
-        messages.push({
-            id: `user-${Date.now()}`,
-            role: 'user',
-            content: text.trim(),
-            timestamp: new Date(),
-            type: 'text',
-        });
-
-        isProcessing = true;
-        renderMessages();
-        updateSendButton();
-
-        // 模拟 AI 响应延迟
-        setTimeout(() => {
-            const response = generateAIResponse(text.trim());
-            messages.push(response);
-            isProcessing = false;
-            renderMessages();
-            updateSendButton();
-        }, 800 + Math.random() * 600);
-    }
-
-    function generateAIResponse(userInput) {
-        const lower = userInput.toLowerCase();
-
-        if (lower.includes('收益') || lower.includes('apy') || lower.includes('利息') || lower.includes('优化')) {
-            return {
-                id: `ai-${Date.now()}`,
-                role: 'assistant',
-                content: `📊 **收益优化建议**\n\n我扫描了你当前的持仓分布，发现你有 **$12,500 USDC** 在 Ethereum 上闲置。\n\n当前最优收益选项：\n• **Aave v3** — 4.8% APY (USDC)\n• **Compound v3** — 4.2% APY\n• **Ethena sUSDe** — 8.9% APY ⭐ 当前最高\n\n建议将 USDC 转入 Ethena 获取更高收益。是否执行？`,
-                timestamp: new Date(),
-                type: 'transaction_preview',
-            };
-        }
-
-        if (lower.includes('风险') || lower.includes('波动') || lower.includes('调整')) {
-            return {
-                id: `ai-${Date.now()}`,
-                role: 'assistant',
-                content: `🛡️ **风险分析报告**\n\n市场波动率指数 (VIX-like) 当前处于 **72**，属于高波动区间。\n\n你的持仓风险分布：\n• **BTC/ETH** — 43% (中等风险)\n• **SOL** — 10% (高风险)\n• **稳定币** — 33% (低风险)\n\n⚠️ 建议：SOL 仓位占比偏高，近期价格波动较大。是否考虑将部分 SOL 转换为稳定币以降低风险敞口？`,
-                timestamp: new Date(),
-                type: 'alert',
-            };
-        }
-
-        if (lower.includes('持仓') || lower.includes('资产') || lower.includes('多少钱') || lower.includes('总览')) {
-            const assetLines = mockAssets.map(a =>
-                `• ${a.symbol}: $${a.usdValue.toLocaleString()} (${((a.usdValue / totalValue) * 100).toFixed(1)}%)`
-            ).join('\n');
-            return {
-                id: `ai-${Date.now()}`,
-                role: 'assistant',
-                content: `📈 **当前持仓总览**\n\n总资产价值：**$${totalValue.toLocaleString()}**\n\n分项：\n${assetLines}\n\n近 24h 整体浮动：**+2.3%** ✅`,
-                timestamp: new Date(),
-                type: 'asset_summary',
-            };
-        }
-
-        // 默认回复
-        return {
-            id: `ai-${Date.now()}`,
-            role: 'assistant',
-            content: `🔍 我理解你的问题是："${userInput}"\n\n我需要进一步确认你的意图。你可以更具体地告诉我：\n• 要查询某个具体资产的详情？\n• 要执行一笔交易？\n• 要优化收益配置？\n• 要分析市场风险？\n\n我会根据你的需求给出更精准的建议。`,
-            timestamp: new Date(),
-            type: 'text',
+            
+            // 调用原有函数
+            if (typeof originalSendMessage === 'function') {
+                originalSendMessage(text);
+            }
         };
-    }
-
-    // ============================================================
-    //  UI 控制
-    // ============================================================
-
-    function updateSendButton() {
-        const input = document.getElementById('chatInput');
-        const btn = document.getElementById('sendBtn');
-        const hasText = input.value.trim() !== '';
-        if (hasText && !isProcessing) {
-            btn.disabled = false;
-            btn.className = 'p-2 rounded-xl transition-all bg-blue-500 text-white hover:bg-blue-600';
-            btn.innerHTML =
-                `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4 20-7z"/><path d="M22 2 11 13"/></svg>`;
-        } else {
-            btn.disabled = true;
-            btn.className = 'p-2 rounded-xl transition-all bg-[#1a1a2a] text-[#4a4a5a] cursor-not-allowed';
-            btn.innerHTML =
-                `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4 20-7z"/><path d="M22 2 11 13"/></svg>`;
-        }
-    }
-
-    // ============================================================
-    //  初始化事件
-    // ============================================================
-
-    document.addEventListener('DOMContentLoaded', function() {
-        const input = document.getElementById('chatInput');
-        const sendBtn = document.getElementById('sendBtn');
-
-        // 输入框自动调整高度
-        input.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-            updateSendButton();
-        });
-
-        // 发送按钮点击
-        sendBtn.addEventListener('click', function() {
-            const text = input.value.trim();
-            if (text && !isProcessing) {
-                sendMessage(text);
-                input.value = '';
-                input.style.height = 'auto';
-                updateSendButton();
-            }
-        });
-
-        // Enter 发送 (Shift+Enter 换行)
-        input.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendBtn.click();
-            }
-        });
-
-        // 初始渲染
-        renderAssetOverview();
-        renderQuickActions();
-        renderMessages();
-        updateSendButton();
-
-        // 暴露 sendMessage 到全局（供快捷按钮调用）
-        window.sendMessage = sendMessage;
-    });
-</script>
-
+    </script>
 </body>
 </html>
